@@ -3,7 +3,7 @@
 
 
 
-parser TelemetryParser(packet_in packet,
+parser TPPParser(packet_in packet,
                        inout metadata meta,
                        inout headers hdrs) 
 {
@@ -39,7 +39,7 @@ parser TelemetryParser(packet_in packet,
 }
 
 
-control TelemetryEgress(inout headers hdr,
+control TPPEgress(inout headers hdr,
                         inout metadata meta,
                         inout standard_metadata_t standard_metadata) 
 {
@@ -76,7 +76,7 @@ control TelemetryEgress(inout headers hdr,
     }
 }
 
-control TelemetryDeparser(packet_out packet, 
+control TPPDeparser(packet_out packet, 
                           in headers hdr) 
 {
     apply {

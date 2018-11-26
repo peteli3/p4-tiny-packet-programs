@@ -2,7 +2,7 @@
 #include <core.p4>
 #include <v1model.p4>
 #include "headers.p4"
-#include "telemetry.p4"
+#include "tpp.p4"
 
 /*************************************************************************
 *********************** P A R S E R  ***********************************
@@ -13,7 +13,7 @@ parser MyParser(packet_in packet,
                 inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
 
-    TelemetryParser() telemetryParser;
+    TPPParser() tppParser;
 
     state start {
         transition parse_ethernet;
@@ -22,7 +22,7 @@ parser MyParser(packet_in packet,
     state parse_ethernet {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
-            TYPE_SRC_ROUTE: parse_src_route;
+           TYPE_SRC_ROUTE: parse_src_route;
             TYPE_IPV4: parse_ipv4;
             default: accept;
         }
@@ -46,7 +46,14 @@ parser MyParser(packet_in packet,
 
     state parse_udp {
         packet.extract(hdr.udp);
-        telemetryParser.apply(packet, meta, hdr);
+        transition select(hdr.udp.dstPort) {
+            PORT_TPP: parse_tpp;
+            default: accept;
+        }
+    }
+
+    state parse_tpp {
+        tppParser.apply(packet, meta, hdr);
         transition accept;
     }
 }
@@ -107,9 +114,9 @@ control MyIngress(inout headers hdr,
 control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata) {
-    TelemetryEgress() telemetryEgress;
+    TPPEgress() tppEgress;
     apply {
-        telemetryEgress.apply(hdr, meta, standard_metadata);
+        tppEgress.apply(hdr, meta, standard_metadata);
     }
 }
 
@@ -126,13 +133,13 @@ control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
 *************************************************************************/
 
 control MyDeparser(packet_out packet, in headers hdr) {
-    TelemetryDeparser() telemetryDeparser;
+    TPPDeparser() tppDeparser;
     apply {
         packet.emit(hdr.ethernet);
         packet.emit(hdr.src_routes);
         packet.emit(hdr.ipv4);
         packet.emit(hdr.udp);
-        telemetryDeparser.apply(packet, hdr);
+        tppDeparser.apply(packet, hdr);
     }
 }
 

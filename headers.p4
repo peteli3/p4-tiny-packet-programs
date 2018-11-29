@@ -43,25 +43,26 @@ header src_route_t {
     bit<15> port;
 }
 
+struct metadata {
+}
+
 // tpp headers
 
-header tpp_insn_t {
-    bit<32> instruction;
-}
-
-header packet_data_t {
-    bit<32> packet_data;
-}
-
 header tpp_t {
-    bit<64> tppLen;
-    bit<64> packetMemLen;
-    bit<64> packetMemAddrMode; // TODO
-    bit<64> hopNum;
-    bit<64> perHopMemLen;
+    bit<32> tpp_len;
+    bit<32> mem_len; // total mem len
+    bit<32> mem_mode; // 0 stack, 1 hop
+    bit<32> mem_sp; // stack ptr
+    bit<32> mem_hop_len;
+    bit<32> tpp_checksum;
 }
 
-struct metadata {
+header tpp_insn_t {
+    bit<32> insn;
+}
+
+header tpp_mem_t {
+    bit<32> value;
 }
 
 struct headers {
@@ -71,8 +72,8 @@ struct headers {
     udp_t udp;
 
     // tpp definitions
-    tpp_t tpp;
+    tpp_t tpp_header;
     tpp_insn_t[MAX_INSTRUCTIONS] tpp_insns;
-    packet_data_t[MAX_PACKET_DATA] packet_data;
+    tpp_mem_t[MAX_PACKET_DATA] tpp_mem;
 }
 

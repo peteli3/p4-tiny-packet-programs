@@ -19,18 +19,28 @@ def get_if():
         exit(1)
     return iface
 
-class Hop(Packet):
-    fields_desc = [ ShortField("portId", None) ]
-    def extract_padding(self, p):
-        return "", p
+class TPPHeader(Packet):
+    fields_desc = [ 
+        BitField("tpp_len", 0, 32),
+        BitField("mem_len", 0, 32),
+        BitField("mem_mode", 0, 32),
+        BitField("mem_sp", 0, 32),
+        BitField("mem_hop_len", 0, 32),
+        BitField("tpp_checksum", 0, 32)
+    ]
 
-class Telemetry(Packet):
-    fields_desc = [ ByteField("count", None),
-                    IntField("maxBytes", None),
-                    PacketListField("hops", [], Hop, count_from=lambda pkt:pkt.count) ]
-    
-bind_layers(UDP, Telemetry, dport=4321)
-    
+class TPPInsns(Packet):
+    fields_desc = [ 
+        BitField("insn", 0, 32)
+    ]
+
+class TPPMemory(Packet):
+    fields_desc = [ 
+        BitField("value", 0, 32)
+    ]
+
+bind_layers(UDP, TPPHeader, dport=0x6666)
+
 def handle_pkt(pkt):
     hexdump(pkt)
     pkt.show2()
@@ -40,7 +50,7 @@ def main():
     iface = get_if()
     print "sniffing on %s" % iface
     sys.stdout.flush()
-    sniff(filter="udp and port 4321", iface = iface,
+    sniff(filter="udp and port 0x6666", iface = iface,
           prn = lambda x: handle_pkt(x))
 
 if __name__ == '__main__':

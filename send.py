@@ -11,6 +11,8 @@ from scapy.all import Ether, IP, UDP
 from scapy.fields import *
 import readline
 
+FIXED_MEM_SLOTS = 13
+
 def get_if():
     ifs=get_if_list()
     iface=None
@@ -36,24 +38,30 @@ class TPPHeader(Packet):
         BitField("mem_mode", 0, 32),
         BitField("mem_sp", 0, 32),
         BitField("mem_hop_len", 0, 32),
-        BitField("tpp_checksum", 0, 32)
+        BitField("tpp_checksum", 0, 32),
+        BitField("insn_validity", 0, 8)
     ]
 
 class TPPInsn(Packet):
     fields_desc = [ 
-        BitField("insn", 0, 32)
+        BitField("bos", 0, 1),
+        BitField("insn", 0, 31)
     ]
 
 class TPPMemory(Packet):
     fields_desc = [ 
-        BitField("value", 0, 32)
+        BitField("bos", 0, 1),
+        BitField("value", 0, 31)
     ]
    
 bind_layers(Ether, SourceRoute, type=0x1234)
 bind_layers(SourceRoute, SourceRoute, bos=0)
 bind_layers(SourceRoute, IP, bos=1)
 bind_layers(UDP, TPPHeader, dport=0x6666)
-bind_layers(TPPHeader, TPPInsn, {'type': 1})
+bind_layers(TPPHeader, TPPInsn, insn_validity=1)
+bind_layers(TPPInsn, TPPInsn, bos=0)
+bind_layers(TPPInsn, TPPMemory, bos=1)
+bind_layers(TPPMemory, TPPMemory, bos=0)
 
 def main():
 
@@ -70,6 +78,20 @@ def main():
         2,
         3,
         4,
+        5,
+    ]
+
+    # tpp initialized mem here
+    mem_vals = [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        600,
+        420,
+        6969
     ]
         
     iface = get_if()
@@ -104,18 +126,34 @@ def main():
             mem_mode=1, 
             mem_sp=0,
             mem_hop_len=69,
-            tpp_checksum=64578677
+            tpp_checksum=64578677,
+            insn_validity=1
         )
 
+        i = 0
         for insn in insns:
             pkt = pkt / TPPInsn(
-                insn=insn
+                bos=0,
+                insn=insn,
+            )
+            i += 1
+        if pkt.haslayer(TPPInsn):
+            pkt.getlayer(TPPInsn, i).bos = 1
+
+        for i in range(FIXED_MEM_SLOTS):
+
+            value_to_insert = 0
+            if i < len(mem_vals):
+                value_to_insert = mem_vals[i]
+
+            pkt = pkt / TPPMemory(
+                bos=0,
+                value=value_to_insert
             )
 
-        print(pkt.summary())
+        pkt.getlayer(TPPMemory, FIXED_MEM_SLOTS).bos = 1
 
-        # for insn in insns:
-        #     pkt = pkt / Te
+        print(pkt.summary())
         
         hexdump(pkt)
         pkt.show2()

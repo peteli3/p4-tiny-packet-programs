@@ -58,11 +58,13 @@ header tpp_t {
 }
 
 header tpp_insn_t {
-    bit<32> insn;
+    bit<1> bos;
+    bit<31> insn;
 }
 
 header tpp_mem_t {
-    bit<32> value;
+    bit<1> bos;
+    bit<31> value;
 }
 
 struct headers {

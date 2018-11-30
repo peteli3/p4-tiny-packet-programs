@@ -39,7 +39,7 @@ class TPPHeader(Packet):
         BitField("tpp_checksum", 0, 32)
     ]
 
-class TPPInsns(Packet):
+class TPPInsn(Packet):
     fields_desc = [ 
         BitField("insn", 0, 32)
     ]
@@ -53,6 +53,7 @@ bind_layers(Ether, SourceRoute, type=0x1234)
 bind_layers(SourceRoute, SourceRoute, bos=0)
 bind_layers(SourceRoute, IP, bos=1)
 bind_layers(UDP, TPPHeader, dport=0x6666)
+bind_layers(TPPHeader, TPPInsn, {'type': 1})
 
 def main():
 
@@ -65,7 +66,10 @@ def main():
 
     # tpp instructions here
     insns = [
-
+        1,
+        2,
+        3,
+        4,
     ]
         
     iface = get_if()
@@ -102,6 +106,11 @@ def main():
             mem_hop_len=69,
             tpp_checksum=64578677
         )
+
+        for insn in insns:
+            pkt = pkt / TPPInsn(
+                insn=insn
+            )
 
         print(pkt.summary())
 

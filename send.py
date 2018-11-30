@@ -13,6 +13,7 @@ import readline
 
 FIXED_MEM_SLOTS = 12
 
+
 class SourceRoute(Packet):
     fields_desc = [
         BitField("bos", 0, 1),
@@ -123,7 +124,7 @@ def main():
         sys.argv.append("10.0.2.2") # for testing
         # exit(1)
 
-    # TODO tpp instructions here, use binary! e.g. 0b110110101010
+    # CONFIG tpp instruction seq, use binary! e.g. 0b110110101010
     insns = [
         0b11,
         0b01,
@@ -132,7 +133,8 @@ def main():
         5,
     ]
 
-    # TODO tpp initialized mem here, use hex! e.g. 0x433452351ab2
+    # CONFIG tpp starting mem here, use hex! e.g. 0x433452351ab2
+    # stored exactly how you read it here (growing downward)
     initial_memory = [
         0,
         1,

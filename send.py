@@ -11,19 +11,9 @@ from scapy.all import Ether, IP, UDP
 from scapy.fields import *
 import readline
 
-FIXED_MEM_SLOTS = 13
+FIXED_MEM_SLOTS = 12
 
-def get_if():
-    ifs=get_if_list()
-    iface=None
-    for i in get_if_list():
-        if "eth0" in i:
-            iface=i
-            break;
-    if not iface:
-        print "Cannot find eth0 interface"
-        exit(1)
-    return iface
+# header definitions
 
 class SourceRoute(Packet):
     fields_desc = [
@@ -31,8 +21,9 @@ class SourceRoute(Packet):
         BitField("port", 0, 15)
     ]
 
+
 class TPPHeader(Packet):
-    fields_desc = [ 
+    fields_desc = [
         BitField("tpp_len", 0, 32),
         BitField("mem_len", 0, 32),
         BitField("mem_mode", 0, 32),
@@ -42,18 +33,21 @@ class TPPHeader(Packet):
         BitField("insn_validity", 0, 8)
     ]
 
+
 class TPPInsn(Packet):
-    fields_desc = [ 
+    fields_desc = [
         BitField("bos", 0, 1),
         BitField("insn", 0, 31)
     ]
 
+
 class TPPMemory(Packet):
-    fields_desc = [ 
+    fields_desc = [
         BitField("bos", 0, 1),
         BitField("value", 0, 31)
     ]
-   
+
+
 bind_layers(Ether, SourceRoute, type=0x1234)
 bind_layers(SourceRoute, SourceRoute, bos=0)
 bind_layers(SourceRoute, IP, bos=1)
@@ -62,6 +56,68 @@ bind_layers(TPPHeader, TPPInsn, insn_validity=1)
 bind_layers(TPPInsn, TPPInsn, bos=0)
 bind_layers(TPPInsn, TPPMemory, bos=1)
 bind_layers(TPPMemory, TPPMemory, bos=0)
+
+
+def get_if():
+    ifs = get_if_list()
+    iface = None
+    for i in get_if_list():
+        if "eth0" in i:
+            iface = i
+            break
+    if not iface:
+        print "Cannot find eth0 interface"
+        exit(1)
+    return iface
+
+
+def compute_tpp_size(insns, memory=FIXED_MEM_SLOTS):
+    """ returns tpp size in bytes
+
+    :arg insns: is the # of instructions
+    :arg memory: is the # of memory slots
+    """
+
+    insn_section_bytes = 4 * insns
+    mem_section_bytes = 4 * memory
+
+    return insn_section_bytes + mem_section_bytes
+
+
+def build_tpp_packet(pkt, insns, initial_memory):
+    pkt = pkt / TPPHeader(
+        tpp_len=compute_tpp_size(len(insns)),
+        mem_len=(4*FIXED_MEM_SLOTS),
+        mem_mode=1,
+        mem_sp=0,
+        mem_hop_len=4,
+        tpp_checksum=64578677,
+        insn_validity=1
+    )
+
+    i = 0
+    for insn in insns:
+        pkt = pkt / TPPInsn(
+            bos=0,
+            insn=insn,
+        )
+        i += 1
+    if pkt.haslayer(TPPInsn):
+        pkt.getlayer(TPPInsn, i).bos = 1
+
+    for i in range(FIXED_MEM_SLOTS):
+
+        value_to_insert = 0
+        if i < len(initial_memory):
+            value_to_insert = initial_memory[i]
+
+        pkt = pkt / TPPMemory(
+            bos=0,
+            value=value_to_insert
+        )
+
+    pkt.getlayer(TPPMemory, FIXED_MEM_SLOTS).bos = 1
+
 
 def main():
 
@@ -74,15 +130,15 @@ def main():
 
     # tpp instructions here
     insns = [
-        1,
-        2,
-        3,
-        4,
+        0b11,
+        0b01,
+        0b10,
+        0b00,
         5,
     ]
 
     # tpp initialized mem here
-    mem_vals = [
+    initial_memory = [
         0,
         1,
         2,
@@ -93,7 +149,7 @@ def main():
         420,
         6969
     ]
-        
+
     iface = get_if()
     addr = socket.gethostbyname(sys.argv[1])
 
@@ -120,44 +176,13 @@ def main():
 
         pkt = pkt / IP(dst=addr)
         pkt = pkt / UDP(sport=1234, dport=0x6666)
-        pkt = pkt / TPPHeader(
-            tpp_len=100, 
-            mem_len=420, 
-            mem_mode=1, 
-            mem_sp=0,
-            mem_hop_len=69,
-            tpp_checksum=64578677,
-            insn_validity=1
-        )
-
-        i = 0
-        for insn in insns:
-            pkt = pkt / TPPInsn(
-                bos=0,
-                insn=insn,
-            )
-            i += 1
-        if pkt.haslayer(TPPInsn):
-            pkt.getlayer(TPPInsn, i).bos = 1
-
-        for i in range(FIXED_MEM_SLOTS):
-
-            value_to_insert = 0
-            if i < len(mem_vals):
-                value_to_insert = mem_vals[i]
-
-            pkt = pkt / TPPMemory(
-                bos=0,
-                value=value_to_insert
-            )
-
-        pkt.getlayer(TPPMemory, FIXED_MEM_SLOTS).bos = 1
+        build_tpp_packet(pkt, insns, initial_memory)
 
         print(pkt.summary())
-        
+
         hexdump(pkt)
         pkt.show2()
         sendp(pkt, iface=iface, verbose=False)
-    
+
 if __name__ == '__main__':
     main()

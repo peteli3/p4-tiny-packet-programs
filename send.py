@@ -13,8 +13,6 @@ import readline
 
 FIXED_MEM_SLOTS = 12
 
-# header definitions
-
 class SourceRoute(Packet):
     fields_desc = [
         BitField("bos", 0, 1),
@@ -46,16 +44,6 @@ class TPPMemory(Packet):
         BitField("bos", 0, 1),
         BitField("value", 0, 31)
     ]
-
-
-bind_layers(Ether, SourceRoute, type=0x1234)
-bind_layers(SourceRoute, SourceRoute, bos=0)
-bind_layers(SourceRoute, IP, bos=1)
-bind_layers(UDP, TPPHeader, dport=0x6666)
-bind_layers(TPPHeader, TPPInsn, insn_validity=1)
-bind_layers(TPPInsn, TPPInsn, bos=0)
-bind_layers(TPPInsn, TPPMemory, bos=1)
-bind_layers(TPPMemory, TPPMemory, bos=0)
 
 
 def get_if():
@@ -95,18 +83,16 @@ def build_tpp_packet(pkt, insns, initial_memory):
         insn_validity=1
     )
 
-    i = 0
-    for insn in insns:
+    # do exactly the # of instructions given
+    for opcode in insns:
         pkt = pkt / TPPInsn(
             bos=0,
-            insn=insn,
+            insn=opcode,
         )
-        i += 1
-    if pkt.haslayer(TPPInsn):
-        pkt.getlayer(TPPInsn, i).bos = 1
+    pkt.getlayer(TPPInsn, len(insns)).bos = 1
 
+    # initialize up to predefined fixed memory
     for i in range(FIXED_MEM_SLOTS):
-
         value_to_insert = 0
         if i < len(initial_memory):
             value_to_insert = initial_memory[i]
@@ -115,11 +101,21 @@ def build_tpp_packet(pkt, insns, initial_memory):
             bos=0,
             value=value_to_insert
         )
-
     pkt.getlayer(TPPMemory, FIXED_MEM_SLOTS).bos = 1
+
+    return pkt
 
 
 def main():
+
+    bind_layers(Ether, SourceRoute, type=0x1234)
+    bind_layers(SourceRoute, SourceRoute, bos=0)
+    bind_layers(SourceRoute, IP, bos=1)
+    bind_layers(UDP, TPPHeader, dport=0x6666)
+    bind_layers(TPPHeader, TPPInsn, insn_validity=1)
+    bind_layers(TPPInsn, TPPInsn, bos=0)
+    bind_layers(TPPInsn, TPPMemory, bos=1)
+    bind_layers(TPPMemory, TPPMemory, bos=0)
 
     if len(sys.argv) < 2:
         print('usage: send.py <dst-addr>')
@@ -127,8 +123,7 @@ def main():
         sys.argv.append("10.0.2.2") # for testing
         # exit(1)
 
-
-    # tpp instructions here
+    # TODO tpp instructions here, use binary! e.g. 0b110110101010
     insns = [
         0b11,
         0b01,
@@ -137,7 +132,7 @@ def main():
         5,
     ]
 
-    # tpp initialized mem here
+    # TODO tpp initialized mem here, use hex! e.g. 0x433452351ab2
     initial_memory = [
         0,
         1,
@@ -163,7 +158,7 @@ def main():
             break;
         print
 
-        pkt = Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff');
+        pkt = Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
         i = 0
         for p in s.split(" "):
             try:
@@ -176,9 +171,7 @@ def main():
 
         pkt = pkt / IP(dst=addr)
         pkt = pkt / UDP(sport=1234, dport=0x6666)
-        build_tpp_packet(pkt, insns, initial_memory)
-
-        print(pkt.summary())
+        pkt = build_tpp_packet(pkt, insns, initial_memory)
 
         hexdump(pkt)
         pkt.show2()

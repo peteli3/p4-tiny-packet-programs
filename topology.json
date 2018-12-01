@@ -5,10 +5,10 @@
         "h3"
     ],
     "switches": {
-        "s1": {},
-        "s2": {},
-        "s3": {},
-        "s4": {}
+        "s1": { "runtime_json" : "tpp-runtime.json" },
+        "s2": { "runtime_json" : "tpp-runtime.json" },
+        "s3": { "runtime_json" : "tpp-runtime.json" },
+        "s4": { "runtime_json" : "tpp-runtime.json" }
     },
     "links": [
         ["h1", "s1"],

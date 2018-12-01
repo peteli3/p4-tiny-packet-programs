@@ -29,7 +29,8 @@ class TPPHeader(Packet):
         BitField("mem_sp", 0, 32),
         BitField("mem_hop_len", 0, 32),
         BitField("tpp_checksum", 0, 32),
-        BitField("insn_validity", 0, 8)
+        BitField("insns_valid", 0, 1),
+        BitField("num_insns", 0, 7)
     ]
 
 
@@ -74,6 +75,13 @@ def compute_tpp_size(insns, memory=FIXED_MEM_SLOTS):
 
 
 def build_tpp_packet(pkt, insns, initial_memory):
+
+    bind_layers(UDP, TPPHeader, dport=0x6666)
+    bind_layers(TPPHeader, TPPInsn, insns_valid=1)
+    bind_layers(TPPInsn, TPPInsn, bos=0)
+    bind_layers(TPPInsn, TPPMemory, bos=1)
+    bind_layers(TPPMemory, TPPMemory, bos=0)
+
     pkt = pkt / TPPHeader(
         tpp_len=compute_tpp_size(len(insns)),
         mem_len=(4*FIXED_MEM_SLOTS),
@@ -81,7 +89,8 @@ def build_tpp_packet(pkt, insns, initial_memory):
         mem_sp=0,
         mem_hop_len=4,
         tpp_checksum=64578677,
-        insn_validity=1
+        insns_valid=1,
+        num_insns=len(insns)
     )
 
     # do exactly the # of instructions given
@@ -112,11 +121,6 @@ def main():
     bind_layers(Ether, SourceRoute, type=0x1234)
     bind_layers(SourceRoute, SourceRoute, bos=0)
     bind_layers(SourceRoute, IP, bos=1)
-    bind_layers(UDP, TPPHeader, dport=0x6666)
-    bind_layers(TPPHeader, TPPInsn, insn_validity=1)
-    bind_layers(TPPInsn, TPPInsn, bos=0)
-    bind_layers(TPPInsn, TPPMemory, bos=1)
-    bind_layers(TPPMemory, TPPMemory, bos=0)
 
     if len(sys.argv) < 2:
         print('usage: send.py <dst-addr>')
@@ -126,12 +130,13 @@ def main():
 
     # CONFIG tpp instruction seq, use binary! e.g. 0b110110101010
     insns = [
-        0b11,
-        0b01,
-        0b10,
-        0b00,
-        5,
+        0b0010000000010010000000011001101,
+        0b0100000000010010000000011001101,
+        0b0110000000010010000000011001101,
+        0b1000000000010010000000011001101,
+        0b1010000000010010000000011001101,
     ]
+    assert len(insns) <= 5
 
     # CONFIG tpp starting mem here, use hex! e.g. 0x433452351ab2
     # stored exactly how you read it here (growing downward)
@@ -146,6 +151,7 @@ def main():
         420,
         6969
     ]
+    assert len(initial_memory) <= FIXED_MEM_SLOTS
 
     iface = get_if()
     addr = socket.gethostbyname(sys.argv[1])

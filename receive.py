@@ -27,7 +27,8 @@ class TPPHeader(Packet):
         BitField("mem_sp", 0, 32),
         BitField("mem_hop_len", 0, 32),
         BitField("tpp_checksum", 0, 32),
-        BitField("insn_validity", 0, 8)
+        BitField("insns_valid", 0, 1),
+        BitField("num_insns", 0, 7)
     ]
 
 class TPPInsn(Packet):
@@ -43,7 +44,7 @@ class TPPMemory(Packet):
     ]
 
 bind_layers(UDP, TPPHeader, dport=0x6666)
-bind_layers(TPPHeader, TPPInsn, insn_validity=1)
+bind_layers(TPPHeader, TPPInsn, insns_valid=1)
 bind_layers(TPPInsn, TPPInsn, bos=0)
 bind_layers(TPPInsn, TPPMemory, bos=1)
 bind_layers(TPPMemory, TPPMemory, bos=0)

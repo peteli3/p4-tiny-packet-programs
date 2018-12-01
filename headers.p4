@@ -55,6 +55,8 @@ header tpp_t {
     bit<32> mem_sp; // stack ptr
     bit<32> mem_hop_len;
     bit<32> tpp_checksum;
+    bit<1> insns_valid;
+    bit<7> num_insns;
 }
 
 header tpp_insn_t {

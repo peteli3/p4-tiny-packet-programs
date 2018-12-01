@@ -75,6 +75,8 @@ control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
+    TPPIngress() tppIngress;
+
     action drop() {
         mark_to_drop();
     }
@@ -101,6 +103,9 @@ control MyIngress(inout headers hdr,
             if (hdr.ipv4.isValid()){
                 update_ttl();
             }
+
+            // only invoke tpp if routing is valid
+            tppIngress.apply(hdr, meta, standard_metadata);
         } else {
             drop();
         }

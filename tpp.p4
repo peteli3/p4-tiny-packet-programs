@@ -53,11 +53,11 @@ control TPPIngress(
     bit<8> cur_insn_rd;
     bit<8> cur_insn_rs1;
     bit<8> cur_insn_rs2;
-    bool cexec_stop; // needs to be reset after each entire TPP pkt!
-    bool cstore; // needs to be reset after each cstore
-    bit<32> num_sp_decs;
-    bit<32> just_popped;
-    bit<32> just_cstored;
+    bool cexec_stop = false; // needs to be reset after each entire TPP pkt!
+    bool cstore = false; // needs to be reset after each cstore
+    bit<32> num_sp_decs = 0;
+    bit<32> just_popped = 0;
+    bit<32> just_cstored = 0;
 
     table tpp_debug {
         key = {
@@ -112,7 +112,8 @@ control TPPIngress(
         cur_insn_rd = insn[27:20];
         cur_insn_rs1 = insn[19:12];
         cur_insn_rs2 = insn[11:4];
-        // last 3 bits (insn[3:0]) are dont-cares
+        // last 4 bits (insn[3:0]) are dont-cares FOR NOW
+        // TODO: we can use last 4 bits for if-else insn!
     }
 
     action clear_tpp_insn_registers() {
@@ -136,24 +137,23 @@ control TPPIngress(
     }
 
     action tpp_pop() {
-        // TODO: cur_insn_rd tells u which switch_reg to write to
         bit<32> stack_top_val;
         tpp_mem_reg.read(stack_top_val, hdr.tpp_header.mem_sp);
-        just_popped = stack_top_val;
+        switch_reg.write((bit<32>) cur_insn_rd, stack_top_val);
         hdr.tpp_header.mem_sp = hdr.tpp_header.mem_sp - 1;
         num_sp_decs = num_sp_decs + 1;
+        just_popped = stack_top_val; // for debugging
     }
 
     action tpp_store() {
         // INVARIANT: cur_insn_rs1 < MAX_MEM_SLOTS
-        // TODO: cur_insn_rd tells u which switch_reg to write to
         bit<32> pkt_val;
         tpp_mem_reg.read(pkt_val, (bit<32>) cur_insn_rs1);
+        switch_reg.write((bit<32>) cur_insn_rd, pkt_val);
         just_popped = pkt_val; // for debugging
     }
 
     action tpp_cexec() {
-        // cexec logic here
         bit<32> switch_val;
         switch_reg.read(switch_val, (bit<32>) cur_insn_rd);
         bit<32> pkt_val;

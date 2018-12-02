@@ -86,6 +86,7 @@ control TPPIngress(
         cur_insn_rd = insn[27:20];
         cur_insn_rs1 = insn[19:12];
         cur_insn_rs2 = insn[11:4];
+        // last 3 bits are dont-cares
     }
 
     action clear_tpp_insn_registers() {

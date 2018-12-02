@@ -86,7 +86,7 @@ def build_tpp_packet(pkt, insns, initial_memory):
         tpp_len=compute_tpp_size(len(insns)),
         mem_len=(4*FIXED_MEM_SLOTS),
         mem_mode=1,
-        mem_sp=0,
+        mem_sp=9,
         mem_hop_len=4,
         tpp_checksum=64578677,
         insns_valid=1,
@@ -130,7 +130,7 @@ def main():
 
     # CONFIG tpp instruction seq, use binary! e.g. 0b110110101010
     insns = [
-        0b0010000000010010000000011001101,
+        0b0000000000010010000000011001101,
         0b0100000000010010000000011001101,
         0b0110000000010010000000011001101,
         0b1000000000010010000000011001101,

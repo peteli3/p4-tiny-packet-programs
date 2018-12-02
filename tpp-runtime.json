@@ -8,7 +8,7 @@
       "match": {
         "cur_insn_opcode": 0
       },
-      "action_name": "MyIngress.tppIngress.move_value_to_pkt",
+      "action_name": "MyIngress.tppIngress.push_to_pkt",
       "action_params": {}
     },
     {
@@ -16,7 +16,7 @@
       "match": {
         "cur_insn_opcode": 1
       },
-      "action_name": "MyIngress.tppIngress.move_value_to_pkt",
+      "action_name": "MyIngress.tppIngress.load_to_pkt",
       "action_params": {}
     },
     {

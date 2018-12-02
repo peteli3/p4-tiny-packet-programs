@@ -52,7 +52,7 @@ control TPPIngress(
             hdr.tpp_header.tpp_checksum: exact;
             hdr.tpp_header.insns_valid: exact;
             hdr.tpp_header.num_insns: exact;
-            hdr.tpp_insns[0].insn[30:28]: exact;
+            hdr.tpp_insns[0].insn: exact;
             hdr.tpp_insns[1].insn: exact;
             hdr.tpp_insns[2].insn: exact;
             hdr.tpp_insns[3].insn: exact;
@@ -98,15 +98,13 @@ control TPPIngress(
 
     // push: use pkt_location = pkt.tpp_header.mem_sp
     // load: use pkt_location = rs1
-    action move_value_to_pkt() {
-        if (cur_insn_opcode == TPP_PUSH) {
-            // push logic here
-            hdr.tpp_mem[10].value = 420;
+    action push_to_pkt() {
+        // push logic here
+        switch_reg.write(hdr.tpp_header.mem_sp, (bit<32>) 420);
+    }
 
-        } else if (cur_insn_opcode == TPP_LOAD) {
-            // load logic here
-            hdr.tpp_mem[11].value = 500;
-        }
+    action load_to_pkt() {
+
     }
 
     action move_value_from_pkt() {
@@ -136,7 +134,8 @@ control TPPIngress(
             cur_insn_opcode: exact;
         }
         actions = {
-            move_value_to_pkt;
+            push_to_pkt;
+            load_to_pkt;
             move_value_from_pkt;
             cexec;
             cstore;
@@ -147,11 +146,42 @@ control TPPIngress(
     }
     // USE ABOVE AS TABLE TEMPLATE
 
+    action read_tpp_memory() {
+        switch_reg.write(0, (bit<32>) hdr.tpp_mem[0].value);
+        switch_reg.write(1, (bit<32>) hdr.tpp_mem[1].value);
+        switch_reg.write(2, (bit<32>) hdr.tpp_mem[2].value);
+        switch_reg.write(3, (bit<32>) hdr.tpp_mem[3].value);
+        switch_reg.write(4, (bit<32>) hdr.tpp_mem[4].value);
+        switch_reg.write(5, (bit<32>) hdr.tpp_mem[5].value);
+        switch_reg.write(6, (bit<32>) hdr.tpp_mem[6].value);
+        switch_reg.write(7, (bit<32>) hdr.tpp_mem[7].value);
+        switch_reg.write(8, (bit<32>) hdr.tpp_mem[8].value);
+        switch_reg.write(9, (bit<32>) hdr.tpp_mem[9].value);
+        switch_reg.write(10, (bit<32>) hdr.tpp_mem[10].value);
+        switch_reg.write(11, (bit<32>) hdr.tpp_mem[11].value);
+        switch_reg.write(12, (bit<32>) hdr.tpp_mem[12].value);
+        switch_reg.write(13, (bit<32>) hdr.tpp_mem[13].value);
+        switch_reg.write(14, (bit<32>) hdr.tpp_mem[14].value);
+        switch_reg.write(15, (bit<32>) hdr.tpp_mem[15].value);
+        switch_reg.write(16, (bit<32>) hdr.tpp_mem[16].value);
+        switch_reg.write(17, (bit<32>) hdr.tpp_mem[17].value);
+        switch_reg.write(18, (bit<32>) hdr.tpp_mem[18].value);
+        switch_reg.write(19, (bit<32>) hdr.tpp_mem[19].value);
+        switch_reg.write(20, (bit<32>) hdr.tpp_mem[20].value);
+    }
+
+    action write_tpp_memory() {
+        bit<32> to_write;
+        switch_reg.read(to_write, 9);
+        hdr.tpp_mem[9].value = (bit<31>) to_write;
+    }
+
     apply {
         
         if (hdr.tpp_header.isValid()) {
             
             debug.apply();
+            read_tpp_memory();
 
             // only run first 5 insns
             if (hdr.tpp_insns[0].isValid()) {
@@ -188,6 +218,7 @@ control TPPIngress(
                 clear_tpp_insn_registers();
             }
             */
+            write_tpp_memory();
         }
     }
 

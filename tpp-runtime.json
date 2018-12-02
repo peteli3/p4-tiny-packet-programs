@@ -9,10 +9,7 @@
         "cur_insn_opcode": 0
       },
       "action_name": "MyIngress.tppIngress.move_value_to_pkt",
-      "action_params": {
-        "value": 420,
-        "pkt_location": 6969
-      }
+      "action_params": {}
     },
     {
       "table": "MyIngress.tppIngress.tpp_insn_action",
@@ -20,10 +17,39 @@
         "cur_insn_opcode": 1
       },
       "action_name": "MyIngress.tppIngress.move_value_to_pkt",
-      "action_params": {
-        "value": 421,
-        "pkt_location": 447372
-      }
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action",
+      "match": {
+        "cur_insn_opcode": 2
+      },
+      "action_name": "MyIngress.tppIngress.move_value_from_pkt",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action",
+      "match": {
+        "cur_insn_opcode": 3
+      },
+      "action_name": "MyIngress.tppIngress.move_value_from_pkt",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action",
+      "match": {
+        "cur_insn_opcode": 4
+      },
+      "action_name": "MyIngress.tppIngress.cexec",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action",
+      "match": {
+        "cur_insn_opcode": 5
+      },
+      "action_name": "MyIngress.tppIngress.cstore",
+      "action_params": {}
     }
   ]
 }

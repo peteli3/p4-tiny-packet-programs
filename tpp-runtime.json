@@ -48,7 +48,7 @@
       "match": {
         "cur_insn_opcode": 5
       },
-      "action_name": "MyIngress.tppIngress.tpp_cstore",
+      "action_name": "MyIngress.tppIngress.tpp_cstore_eval_predicate",
       "action_params": {}
     }
   ]

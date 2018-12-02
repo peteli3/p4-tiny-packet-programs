@@ -44,6 +44,36 @@ control TPPIngress(
     inout standard_metadata_t standard_metadata
 ) {
 
+    register<bit<32>>(50) tpp_mem_reg;
+    register<bit<32>>(50) switch_reg;
+
+    // these are one-time use only!
+    bit<4> cur_insn_opcode;
+    // each of these instruction operands are 8 bits to satisfy p4c!
+    bit<8> cur_insn_rd;
+    bit<8> cur_insn_rs1;
+    bit<8> cur_insn_rs2;
+    bool cexec_stop; // needs to be reset after each entire TPP pkt!
+    bool cstore; // needs to be reset after each cstore
+    bit<32> num_sp_decs;
+    bit<32> just_popped;
+    bit<32> just_cstored;
+
+    table tpp_debug {
+        key = {
+            cur_insn_opcode: exact;
+            cur_insn_rd: exact;
+            cur_insn_rs1: exact;
+            cur_insn_rs2: exact;
+            cexec_stop: exact;
+            cstore: exact;
+            num_sp_decs: exact;
+            just_popped: exact;
+            just_cstored: exact;
+        }
+        actions = {}
+    }
+
     table debug {
         key = {
             hdr.tpp_header.tpp_len: exact;
@@ -67,33 +97,7 @@ control TPPIngress(
             hdr.tpp_mem[11].value: exact;
             hdr.tpp_mem[12].value: exact;
             hdr.tpp_mem[13].value: exact;
-        }
-        actions = {}
-    }
-
-    // use this!
-    register<bit<32>>(50) tpp_mem_reg;
-    register<bit<32>>(50) switch_reg;
-
-    // these are one-time use only!
-    bit<4> cur_insn_opcode;
-    // each of these instruction operands are 8 bits to satisfy p4c!
-    bit<8> cur_insn_rd;
-    bit<8> cur_insn_rs1;
-    bit<8> cur_insn_rs2;
-    bool cexec_stop;
-    bit<32> num_sp_decs;
-    bit<32> just_popped;
-
-    table tpp_debug {
-        key = {
-            cur_insn_opcode: exact;
-            cur_insn_rd: exact;
-            cur_insn_rs1: exact;
-            cur_insn_rs2: exact;
-            cexec_stop: exact;
-            num_sp_decs: exact;
-            just_popped: exact;
+            hdr.tpp_mem[18].value: exact;
         }
         actions = {}
     }
@@ -108,7 +112,6 @@ control TPPIngress(
         cur_insn_rd = insn[27:20];
         cur_insn_rs1 = insn[19:12];
         cur_insn_rs2 = insn[11:4];
-
         // last 3 bits (insn[3:0]) are dont-cares
     }
 
@@ -133,6 +136,7 @@ control TPPIngress(
     }
 
     action tpp_pop() {
+        // TODO: cur_insn_rd tells u which switch_reg to write to
         bit<32> stack_top_val;
         tpp_mem_reg.read(stack_top_val, hdr.tpp_header.mem_sp);
         just_popped = stack_top_val;
@@ -141,16 +145,35 @@ control TPPIngress(
     }
 
     action tpp_store() {
+        // INVARIANT: cur_insn_rs1 < MAX_MEM_SLOTS
+        // TODO: cur_insn_rd tells u which switch_reg to write to
+        bit<32> pkt_val;
+        tpp_mem_reg.read(pkt_val, (bit<32>) cur_insn_rs1);
+        just_popped = pkt_val; // for debugging
     }
 
     action tpp_cexec() {
         // cexec logic here
-        drop();
+        bit<32> switch_val;
+        switch_reg.read(switch_val, (bit<32>) cur_insn_rd);
+        bit<32> pkt_val;
+        tpp_mem_reg.read(pkt_val, (bit<32>) cur_insn_rs1);
+        cexec_stop = (switch_val == pkt_val);
     }
 
-    action tpp_cstore() {
-        // cstore logic here
-        drop();
+    action tpp_cstore_eval_predicate() {
+        bit<32> switch_val;
+        switch_reg.read(switch_val, (bit<32>) cur_insn_rd);
+        bit<32> pkt_val;
+        tpp_mem_reg.read(pkt_val, (bit<32>) cur_insn_rs1);
+        cstore = (switch_val == pkt_val);
+    }
+
+    action tpp_cstore_store() {
+        bit<32> pkt_val;
+        tpp_mem_reg.read(pkt_val, (bit<32>) cur_insn_rs2);
+        switch_reg.write((bit<32>) cur_insn_rd, pkt_val);
+        just_cstored = pkt_val;
     }
 
     // USE THIS AS TABLE TEMPLATE for multiple insns!
@@ -164,7 +187,7 @@ control TPPIngress(
             tpp_pop;
             tpp_store;
             tpp_cexec;
-            tpp_cstore;
+            tpp_cstore_eval_predicate;
             drop;
             NoAction;
         }
@@ -249,8 +272,8 @@ control TPPIngress(
 
     action cleanup_tpp() {
         hdr.tpp_header.mem_sp = hdr.tpp_header.mem_sp + num_sp_decs;
+        cexec_stop = false;
     }
-
 
     apply {
         
@@ -258,38 +281,47 @@ control TPPIngress(
             
             read_tpp_memory();
 
+            // for testing purposes
+            switch_reg.write(18, 0x101010);
+
             // only run first 5 insns
-            if (hdr.tpp_insns[0].isValid()) {
+            if (hdr.tpp_insns[0].isValid() && !cexec_stop) {
                 parse_tpp_insn((bit<8>) 0);
                 tpp_insn_action.apply();
                 debug.apply();
-                tpp_debug.apply();
+
+                if (cstore) {
+                    // do the deed
+                    tpp_cstore_store();
+                    tpp_debug.apply();
+                    cstore = false;
+                }
                 clear_tpp_insn_registers();
             }
 
             // TODO to enable these: make a separate table for each
             // THEN!! populate the tpp-runtime.json with same rules!
             /* 
-            if (hdr.tpp_insns[1].isValid()) {
+            if (hdr.tpp_insns[1].isValid()  && !cexec_stop) {
                 parse_tpp_insn((bit<8>) 1);
                 tpp_insn_action1.apply();
                 clear_tpp_insn_registers();
             }
             
             
-            if (hdr.tpp_insns[2].isValid()) {
+            if (hdr.tpp_insns[2].isValid()  && !cexec_stop) {
                 parse_tpp_insn((bit<8>) 1);
                 tpp_insn_action2.apply();
                 clear_tpp_insn_registers();
             }
 
-            if (hdr.tpp_insns[3].isValid()) {
+            if (hdr.tpp_insns[3].isValid()  && !cexec_stop) {
                 parse_tpp_insn((bit<8>) 1);
                 tpp_insn_action3.apply();
                 clear_tpp_insn_registers();
             }
 
-            if (hdr.tpp_insns[4].isValid()) {
+            if (hdr.tpp_insns[4].isValid()  && !cexec_stop) {
                 parse_tpp_insn((bit<8>) 1);
                 tpp_insn_action4.apply();
                 clear_tpp_insn_registers();

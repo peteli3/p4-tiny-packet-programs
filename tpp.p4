@@ -1,6 +1,8 @@
 
 /* -*- P4_16 -*- */
 
+const bit<8> MAX_MEM_SLOTS = 50;
+
 parser TPPParser(
     packet_in packet,
     inout metadata meta,
@@ -57,15 +59,20 @@ control TPPIngress(
             hdr.tpp_insns[2].insn: exact;
             hdr.tpp_insns[3].insn: exact;
             hdr.tpp_insns[4].insn: exact;
-            hdr.tpp_mem[0].value: exact;
-            hdr.tpp_mem[1].value: exact;
-            hdr.tpp_mem[2].value: exact;
-            hdr.tpp_mem[3].value: exact;
+            hdr.tpp_mem[6].value: exact;
+            hdr.tpp_mem[7].value: exact;
+            hdr.tpp_mem[8].value: exact;
+            hdr.tpp_mem[9].value: exact;
+            hdr.tpp_mem[10].value: exact;
+            hdr.tpp_mem[11].value: exact;
+            hdr.tpp_mem[12].value: exact;
+            hdr.tpp_mem[13].value: exact;
         }
         actions = {}
     }
 
     // use this!
+    register<bit<32>>(50) tpp_mem_reg;
     register<bit<32>>(50) switch_reg;
 
     // these are one-time use only!
@@ -75,6 +82,21 @@ control TPPIngress(
     bit<8> cur_insn_rs1;
     bit<8> cur_insn_rs2;
     bool cexec_stop;
+    bit<32> num_sp_decs;
+    bit<32> just_popped;
+
+    table tpp_debug {
+        key = {
+            cur_insn_opcode: exact;
+            cur_insn_rd: exact;
+            cur_insn_rs1: exact;
+            cur_insn_rs2: exact;
+            cexec_stop: exact;
+            num_sp_decs: exact;
+            just_popped: exact;
+        }
+        actions = {}
+    }
 
     action drop() {
         mark_to_drop();
@@ -86,7 +108,8 @@ control TPPIngress(
         cur_insn_rd = insn[27:20];
         cur_insn_rs1 = insn[19:12];
         cur_insn_rs2 = insn[11:4];
-        // last 3 bits are dont-cares
+
+        // last 3 bits (insn[3:0]) are dont-cares
     }
 
     action clear_tpp_insn_registers() {
@@ -96,34 +119,36 @@ control TPPIngress(
         cur_insn_rs2 = 0;
     }
 
-    // push: use pkt_location = pkt.tpp_header.mem_sp
-    // load: use pkt_location = rs1
-    action push_to_pkt() {
-        // push logic here
-        switch_reg.write(hdr.tpp_header.mem_sp, (bit<32>) 420);
+    action tpp_push() {
+        // TODO: change hardcoded value to read from switch_reg
+        // TODO: cur_insn_rd tells u which switch_reg to read
+        hdr.tpp_header.mem_sp = hdr.tpp_header.mem_sp + 1;
+        tpp_mem_reg.write(hdr.tpp_header.mem_sp, (bit<32>) 420);
     }
 
-    action load_to_pkt() {
-
+    action tpp_load() {
+        // INVARIANT: cur_insn_rs1 < MAX_MEM_SLOTS
+        // TODO: cur_insn_rd tells u which switch_reg to read
+        tpp_mem_reg.write((bit<32>) cur_insn_rs1, (bit<32>) 69696969);
     }
 
-    action move_value_from_pkt() {
-        if (cur_insn_opcode == TPP_POP) {
-            // pop logic here
-            hdr.tpp_mem[8].value = 6969;
-
-        } else if (cur_insn_opcode == TPP_STORE) {
-            // store logic here
-            hdr.tpp_mem[9].value = 7826359;
-        }
+    action tpp_pop() {
+        bit<32> stack_top_val;
+        tpp_mem_reg.read(stack_top_val, hdr.tpp_header.mem_sp);
+        just_popped = stack_top_val;
+        hdr.tpp_header.mem_sp = hdr.tpp_header.mem_sp - 1;
+        num_sp_decs = num_sp_decs + 1;
     }
 
-    action cexec() {
+    action tpp_store() {
+    }
+
+    action tpp_cexec() {
         // cexec logic here
         drop();
     }
 
-    action cstore() {
+    action tpp_cstore() {
         // cstore logic here
         drop();
     }
@@ -134,11 +159,12 @@ control TPPIngress(
             cur_insn_opcode: exact;
         }
         actions = {
-            push_to_pkt;
-            load_to_pkt;
-            move_value_from_pkt;
-            cexec;
-            cstore;
+            tpp_push;
+            tpp_load;
+            tpp_pop;
+            tpp_store;
+            tpp_cexec;
+            tpp_cstore;
             drop;
             NoAction;
         }
@@ -146,47 +172,98 @@ control TPPIngress(
     }
     // USE ABOVE AS TABLE TEMPLATE
 
+
     action read_tpp_memory() {
-        switch_reg.write(0, (bit<32>) hdr.tpp_mem[0].value);
-        switch_reg.write(1, (bit<32>) hdr.tpp_mem[1].value);
-        switch_reg.write(2, (bit<32>) hdr.tpp_mem[2].value);
-        switch_reg.write(3, (bit<32>) hdr.tpp_mem[3].value);
-        switch_reg.write(4, (bit<32>) hdr.tpp_mem[4].value);
-        switch_reg.write(5, (bit<32>) hdr.tpp_mem[5].value);
-        switch_reg.write(6, (bit<32>) hdr.tpp_mem[6].value);
-        switch_reg.write(7, (bit<32>) hdr.tpp_mem[7].value);
-        switch_reg.write(8, (bit<32>) hdr.tpp_mem[8].value);
-        switch_reg.write(9, (bit<32>) hdr.tpp_mem[9].value);
-        switch_reg.write(10, (bit<32>) hdr.tpp_mem[10].value);
-        switch_reg.write(11, (bit<32>) hdr.tpp_mem[11].value);
-        switch_reg.write(12, (bit<32>) hdr.tpp_mem[12].value);
-        switch_reg.write(13, (bit<32>) hdr.tpp_mem[13].value);
-        switch_reg.write(14, (bit<32>) hdr.tpp_mem[14].value);
-        switch_reg.write(15, (bit<32>) hdr.tpp_mem[15].value);
-        switch_reg.write(16, (bit<32>) hdr.tpp_mem[16].value);
-        switch_reg.write(17, (bit<32>) hdr.tpp_mem[17].value);
-        switch_reg.write(18, (bit<32>) hdr.tpp_mem[18].value);
-        switch_reg.write(19, (bit<32>) hdr.tpp_mem[19].value);
-        switch_reg.write(20, (bit<32>) hdr.tpp_mem[20].value);
+        // if # mem slots changes, modify this
+        tpp_mem_reg.write(0, (bit<32>) hdr.tpp_mem[0].value);
+        tpp_mem_reg.write(1, (bit<32>) hdr.tpp_mem[1].value);
+        tpp_mem_reg.write(2, (bit<32>) hdr.tpp_mem[2].value);
+        tpp_mem_reg.write(3, (bit<32>) hdr.tpp_mem[3].value);
+        tpp_mem_reg.write(4, (bit<32>) hdr.tpp_mem[4].value);
+        tpp_mem_reg.write(5, (bit<32>) hdr.tpp_mem[5].value);
+        tpp_mem_reg.write(6, (bit<32>) hdr.tpp_mem[6].value);
+        tpp_mem_reg.write(7, (bit<32>) hdr.tpp_mem[7].value);
+        tpp_mem_reg.write(8, (bit<32>) hdr.tpp_mem[8].value);
+        tpp_mem_reg.write(9, (bit<32>) hdr.tpp_mem[9].value);
+        tpp_mem_reg.write(10, (bit<32>) hdr.tpp_mem[10].value);
+        tpp_mem_reg.write(11, (bit<32>) hdr.tpp_mem[11].value);
+        tpp_mem_reg.write(12, (bit<32>) hdr.tpp_mem[12].value);
+        tpp_mem_reg.write(13, (bit<32>) hdr.tpp_mem[13].value);
+        tpp_mem_reg.write(14, (bit<32>) hdr.tpp_mem[14].value);
+        tpp_mem_reg.write(15, (bit<32>) hdr.tpp_mem[15].value);
+        tpp_mem_reg.write(16, (bit<32>) hdr.tpp_mem[16].value);
+        tpp_mem_reg.write(17, (bit<32>) hdr.tpp_mem[17].value);
+        tpp_mem_reg.write(18, (bit<32>) hdr.tpp_mem[18].value);
+        tpp_mem_reg.write(19, (bit<32>) hdr.tpp_mem[19].value);
+        tpp_mem_reg.write(20, (bit<32>) hdr.tpp_mem[20].value);
     }
 
-    action write_tpp_memory() {
+
+    action flush_tpp_memory_to_pkt() {
         bit<32> to_write;
-        switch_reg.read(to_write, 9);
+
+        // if # mem slots changes, modify this
+        tpp_mem_reg.read(to_write, 0);
+        hdr.tpp_mem[0].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 1);
+        hdr.tpp_mem[1].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 2);
+        hdr.tpp_mem[2].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 3);
+        hdr.tpp_mem[3].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 4);
+        hdr.tpp_mem[4].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 5);
+        hdr.tpp_mem[5].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 6);
+        hdr.tpp_mem[6].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 7);
+        hdr.tpp_mem[7].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 8);
+        hdr.tpp_mem[8].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 9);
         hdr.tpp_mem[9].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 10);
+        hdr.tpp_mem[10].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 11);
+        hdr.tpp_mem[11].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 12);
+        hdr.tpp_mem[12].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 13);
+        hdr.tpp_mem[13].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 14);
+        hdr.tpp_mem[14].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 15);
+        hdr.tpp_mem[15].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 16);
+        hdr.tpp_mem[16].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 17);
+        hdr.tpp_mem[17].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 18);
+        hdr.tpp_mem[18].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 19);
+        hdr.tpp_mem[19].value = (bit<31>) to_write;
+        tpp_mem_reg.read(to_write, 20);
+        hdr.tpp_mem[20].value = (bit<31>) to_write;
     }
+
+    action cleanup_tpp() {
+        hdr.tpp_header.mem_sp = hdr.tpp_header.mem_sp + num_sp_decs;
+    }
+
 
     apply {
         
         if (hdr.tpp_header.isValid()) {
             
-            debug.apply();
             read_tpp_memory();
 
             // only run first 5 insns
             if (hdr.tpp_insns[0].isValid()) {
                 parse_tpp_insn((bit<8>) 0);
                 tpp_insn_action.apply();
+                debug.apply();
+                tpp_debug.apply();
                 clear_tpp_insn_registers();
             }
 
@@ -218,21 +295,22 @@ control TPPIngress(
                 clear_tpp_insn_registers();
             }
             */
-            write_tpp_memory();
+
+            flush_tpp_memory_to_pkt();
+            cleanup_tpp();
         }
     }
-
 }
+
 
 control TPPEgress(
     inout headers hdr,
     inout metadata meta,
     inout standard_metadata_t standard_metadata
 ) {
-
     apply {}
-
 }
+
 
 control TPPDeparser(
     packet_out packet, 

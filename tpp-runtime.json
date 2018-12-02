@@ -8,7 +8,7 @@
       "match": {
         "cur_insn_opcode": 0
       },
-      "action_name": "MyIngress.tppIngress.push_to_pkt",
+      "action_name": "MyIngress.tppIngress.tpp_push",
       "action_params": {}
     },
     {
@@ -16,7 +16,7 @@
       "match": {
         "cur_insn_opcode": 1
       },
-      "action_name": "MyIngress.tppIngress.load_to_pkt",
+      "action_name": "MyIngress.tppIngress.tpp_load",
       "action_params": {}
     },
     {
@@ -24,7 +24,7 @@
       "match": {
         "cur_insn_opcode": 2
       },
-      "action_name": "MyIngress.tppIngress.move_value_from_pkt",
+      "action_name": "MyIngress.tppIngress.tpp_pop",
       "action_params": {}
     },
     {
@@ -32,7 +32,7 @@
       "match": {
         "cur_insn_opcode": 3
       },
-      "action_name": "MyIngress.tppIngress.move_value_from_pkt",
+      "action_name": "MyIngress.tppIngress.tpp_store",
       "action_params": {}
     },
     {
@@ -40,7 +40,7 @@
       "match": {
         "cur_insn_opcode": 4
       },
-      "action_name": "MyIngress.tppIngress.cexec",
+      "action_name": "MyIngress.tppIngress.tpp_cexec",
       "action_params": {}
     },
     {
@@ -48,7 +48,7 @@
       "match": {
         "cur_insn_opcode": 5
       },
-      "action_name": "MyIngress.tppIngress.cstore",
+      "action_name": "MyIngress.tppIngress.tpp_cstore",
       "action_params": {}
     }
   ]

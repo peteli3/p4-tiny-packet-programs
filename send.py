@@ -149,7 +149,7 @@ def main():
         5,
         600,
         420,
-        6969
+        0x11111
     ]
     assert len(initial_memory) <= FIXED_MEM_SLOTS
 

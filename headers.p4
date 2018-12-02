@@ -10,6 +10,13 @@ const bit<32> MAX_HOPS = 16;
 const bit<32> MAX_INSTRUCTIONS = 5;
 const bit<32> MAX_PACKET_DATA = 50;
 
+const bit<4> TPP_PUSH   = 0b0000;
+const bit<4> TPP_LOAD   = 0b0001;
+const bit<4> TPP_POP    = 0b0010;
+const bit<4> TPP_STORE  = 0b0011;
+const bit<4> TPP_CEXEC  = 0b0100;
+const bit<4> TPP_CSTORE = 0b0101;
+
 header ethernet_t {
     bit<48> dstAddr;
     bit<48> srcAddr;

@@ -1,8 +1,6 @@
 
 /* -*- P4_16 -*- */
 
-
-
 parser TPPParser(
     packet_in packet,
     inout metadata meta,
@@ -67,66 +65,128 @@ control TPPIngress(
         actions = {}
     }
 
-    bit<28> cur_insn;
-    bit<4>  cur_insn_opcode;
+    // use this!
+    register<bit<32>>(50) switch_reg;
+
+    // these are one-time use only!
+    bit<4> cur_insn_opcode;
+    // each of these instruction operands are 8 bits to satisfy p4c!
+    bit<8> cur_insn_rd;
+    bit<8> cur_insn_rs1;
+    bit<8> cur_insn_rs2;
+    bool cexec_stop;
 
     action drop() {
         mark_to_drop();
     }
 
+    action parse_tpp_insn(bit<8> insn_index) {
+        bit<31> insn = hdr.tpp_insns[insn_index].insn;
+        cur_insn_opcode = (bit<4>) insn[30:28];
+        cur_insn_rd = insn[27:20];
+        cur_insn_rs1 = insn[19:12];
+        cur_insn_rs2 = insn[11:4];
+    }
+
+    action clear_tpp_insn_registers() {
+        cur_insn_opcode = 0;
+        cur_insn_rd = 0;
+        cur_insn_rs1 = 0;
+        cur_insn_rs2 = 0;
+    }
+
     // push: use pkt_location = pkt.tpp_header.mem_sp
-    // load: use pkt_location = arg 2
-    action move_value_to_pkt(bit<32> value, bit<32> pkt_location) {
-        drop();
+    // load: use pkt_location = rs1
+    action move_value_to_pkt() {
+        if (cur_insn_opcode == TPP_PUSH) {
+            // push logic here
+            hdr.tpp_mem[10].value = 420;
+
+        } else if (cur_insn_opcode == TPP_LOAD) {
+            // load logic here
+            hdr.tpp_mem[11].value = 500;
+        }
     }
 
     action move_value_from_pkt() {
+        if (cur_insn_opcode == TPP_POP) {
+            // pop logic here
+            hdr.tpp_mem[8].value = 6969;
 
+        } else if (cur_insn_opcode == TPP_STORE) {
+            // store logic here
+            hdr.tpp_mem[9].value = 7826359;
+        }
     }
 
+    action cexec() {
+        // cexec logic here
+        drop();
+    }
+
+    action cstore() {
+        // cstore logic here
+        drop();
+    }
+
+    // USE THIS AS TABLE TEMPLATE for multiple insns!
     table tpp_insn_action {
         key = {
             cur_insn_opcode: exact;
         }
         actions = {
             move_value_to_pkt;
-            drop; // testing only
+            move_value_from_pkt;
+            cexec;
+            cstore;
+            drop;
             NoAction;
         }
         default_action = NoAction();
     }
-
-    action apply_insn(bit<31> opcode) {
-        bit<3> insn_encoding = opcode[30:28];
-    }
+    // USE ABOVE AS TABLE TEMPLATE
 
     apply {
         
         if (hdr.tpp_header.isValid()) {
-            // only run first 5 insns
             
             debug.apply();
+
+            // only run first 5 insns
             if (hdr.tpp_insns[0].isValid()) {
-                cur_insn_opcode = (bit<4>) hdr.tpp_insns[0].insn[30:28];
-                cur_insn = (bit<28>) hdr.tpp_insns[0].insn[27:0];
+                parse_tpp_insn((bit<8>) 0);
                 tpp_insn_action.apply();
+                clear_tpp_insn_registers();
             }
 
+            // TODO to enable these: make a separate table for each
+            // THEN!! populate the tpp-runtime.json with same rules!
+            /* 
             if (hdr.tpp_insns[1].isValid()) {
-                apply_insn(hdr.tpp_insns[1].insn);
+                parse_tpp_insn((bit<8>) 1);
+                tpp_insn_action1.apply();
+                clear_tpp_insn_registers();
             }
-
+            
+            
             if (hdr.tpp_insns[2].isValid()) {
-                apply_insn(hdr.tpp_insns[2].insn);
+                parse_tpp_insn((bit<8>) 1);
+                tpp_insn_action2.apply();
+                clear_tpp_insn_registers();
             }
 
             if (hdr.tpp_insns[3].isValid()) {
-                apply_insn(hdr.tpp_insns[3].insn);
+                parse_tpp_insn((bit<8>) 1);
+                tpp_insn_action3.apply();
+                clear_tpp_insn_registers();
             }
 
             if (hdr.tpp_insns[4].isValid()) {
-                apply_insn(hdr.tpp_insns[4].insn);
+                parse_tpp_insn((bit<8>) 1);
+                tpp_insn_action4.apply();
+                clear_tpp_insn_registers();
             }
+            */
         }
     }
 
@@ -138,9 +198,7 @@ control TPPEgress(
     inout standard_metadata_t standard_metadata
 ) {
 
-    apply {
-
-    }
+    apply {}
 
 }
 

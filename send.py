@@ -94,12 +94,11 @@ def build_tpp_packet(pkt, insns, initial_memory):
     )
 
     # do exactly the # of instructions given
-    for opcode in insns:
+    for i, opcode in enumerate(insns):
         pkt = pkt / TPPInsn(
-            bos=0,
+            bos=0 if i < len(insns) - 1 else 1,
             insn=opcode,
         )
-    pkt.getlayer(TPPInsn, len(insns)).bos = 1
 
     # initialize up to predefined fixed memory
     for i in range(FIXED_MEM_SLOTS):
@@ -131,10 +130,11 @@ def main():
     # CONFIG tpp instruction seq, use binary! e.g. 0b110110101010
     insns = [
         #0b1010001001000001010000001110000, # THIS IS A WORKING CSTORE 18, 10, 7
-        0b1000001001000001010000011001101, # THIS IS A WORKING CEXEC 18, 10
-        0b0110000000000001010000011001101, # THIS IS A WORKING STORE
-        0b0100000000010010000000011001101, # THIS IS A WORKING POP
-        0b0010000000000001010000011001101, # THIS IS A WORKING PUSH
+        # 0b1000001001000001010000011001101, # THIS IS A WORKING CEXEC 18, 10
+        # 0b0110000000000001010000011001101, # THIS IS A WORKING STORE 0, 10
+        # 0b0100000000010010000000011001101, # THIS IS A WORKING POP 0
+        # 0b0010000000000001010000011001101, # THIS IS A WORKING LOAD 0, 10
+        0b0000000000000001010000011001101, # THIS IS A WORKING PUSH 0
         
         #0b0110000000010010000000011001101,
         #0b1000000000010010000000011001101,

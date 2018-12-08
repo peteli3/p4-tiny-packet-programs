@@ -124,10 +124,10 @@ control TPPIngress(
     }
 
     action tpp_push() {
-        // TODO: change hardcoded value to read from switch_reg
-        // TODO: cur_insn_rd tells u which switch_reg to read
+        bit<32> val;
         hdr.tpp_header.mem_sp = hdr.tpp_header.mem_sp + 1;
-        tpp_mem_reg.write(hdr.tpp_header.mem_sp, (bit<32>) 420);
+        switch_reg.read(val, (bit<32>) cur_insn_rd);
+        tpp_mem_reg.write(hdr.tpp_header.mem_sp, val);
     }
 
     action tpp_load() {

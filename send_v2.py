@@ -123,12 +123,11 @@ def build_tpp_packet(pkt, insns, initial_memory):
     )
 
     # do exactly the # of instructions given
-    for opcode in insns:
+    for i, opcode in enumerate(insns):
         pkt = pkt / TPPInsn(
-            bos=0,
+            bos=0 if i < len(insns) - 1 else 1,
             insn=opcode,
         )
-    pkt.getlayer(TPPInsn, len(insns)).bos = 1
 
     # initialize up to predefined fixed memory
     for i in range(FIXED_MEM_SLOTS):

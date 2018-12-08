@@ -39,7 +39,7 @@ REGISTER_MAP = {
     "Packet:OutputPort"      : 0b11010,
     "Packet:Queue"           : 0b11011,
     "Packet:MatchedFlowEntry": 0b11100,
-    "Packet:AltRoutes"       : 0b11101
+    "Packet:AltRoutes"       : 0b11101,
 }
 
 
@@ -157,24 +157,13 @@ def main():
     with open(sys.argv[1]) as f:
         json_data = json.load(f)
 
-    # CONFIG tpp instruction seq, use binary! e.g. 0b110110101010
+    # Get all instructions as a list of lists
     insns = [convert_tpp_instr(instr) for instr in json_data["instructions"]]
-    # insns = [
-    #     #0b1010001001000001010000001110000, # THIS IS A WORKING CSTORE 18, 10, 7
-    #     0b1000001001000001010000011001101, # THIS IS A WORKING CEXEC 18, 10
-    #     0b0110000000000001010000011001101, # THIS IS A WORKING STORE
-    #     0b0100000000010010000000011001101, # THIS IS A WORKING POP
-    #     0b0010000000000001010000011001101, # THIS IS A WORKING PUSH
-        
-    #     #0b0110000000010010000000011001101,
-    #     #0b1000000000010010000000011001101,
-    #     #0b1010000000010010000000011001101,
-    # ]
     assert len(insns) <= 5
 
     # CONFIG tpp starting mem here, use hex! e.g. 0x433452351ab2
     # stored exactly how you read it here (growing downward)
-    initial_memory = [int(val, 16) for val in json_data["initial_mem"]]
+    initial_memory = [convert_numeric_val(val) for val in json_data["initial_mem"]]
     assert len(initial_memory) <= FIXED_MEM_SLOTS
 
     iface = get_if()
@@ -221,55 +210,55 @@ def convert_tpp_instr(instr):
 
     if instr[0] == "PUSH":
         from_register = instr[1]
-        if from_register.isdigit():
-            from_register = int(from_register)
-        else:
+        if from_register in REGISTER_MAP:
             from_register = REGISTER_MAP[from_register]
+        else:
+            from_register = convert_numeric_val(from_register)
 
         encoded_instr = (encoded_instr << 28) | (from_register << 20)
     
     elif instr[0] == "LOAD":
-        from_register, to_loc = instr[1], int(instr[2])
-        if from_register.isdigit():
-            from_register = int(from_register)
-        else:
+        from_register, to_loc = instr[1], convert_numeric_val(instr[2])
+        if from_register in REGISTER_MAP:
             from_register = REGISTER_MAP[from_register]
+        else:
+            from_register = convert_numeric_val(from_register)
 
         encoded_instr = (encoded_instr << 28) | (from_register << 20) | (to_loc << 12)
 
     elif instr[0] == "POP":
         to_register = instr[1]
-        if to_register.isdigit():
-            to_register = int(to_register)
-        else:
+        if to_register in REGISTER_MAP:
             to_register = REGISTER_MAP[to_register]
+        else:
+            to_register = convert_numeric_val(to_register)
 
         encoded_instr = (encoded_instr << 28) | (to_register << 20)
 
     elif instr[0] == "STORE":
-        to_register, from_loc = instr[1], int(instr[2])
-        if to_register.isdigit():
-            to_register = int(to_register)
-        else:
+        to_register, from_loc = instr[1], convert_numeric_val(instr[2])
+        if to_register in REGISTER_MAP:
             to_register = REGISTER_MAP[to_register]
+        else:
+            to_register = convert_numeric_val(to_register)
 
         encoded_instr = (encoded_instr << 28) | (to_register << 20) | (from_loc << 12)
 
     elif instr[0] == "CEXEC":
-        register, loc = instr[1], int(instr[2])
-        if register.isdigit():
-            register = int(register)
-        else:
+        register, loc = instr[1], convert_numeric_val(instr[2])
+        if register in REGISTER_MAP:
             register = REGISTER_MAP[register]
+        else:
+            register = convert_numeric_val(register)
 
         encoded_instr = (encoded_instr << 28) | (register << 20) | (loc << 12)
     
     elif instr[0] == "CSTORE":
-        register, old_loc, new_loc = instr[1], int(instr[2]), int(instr[3])
-        if register.isdigit():
-            register = int(register)
-        else:
+        register, old_loc, new_loc = instr[1], convert_numeric_val(instr[2]), convert_numeric_val(instr[3])
+        if register in REGISTER_MAP:
             register = REGISTER_MAP[register]
+        else:
+            register = convert_numeric_val(register)
 
         encoded_instr = (encoded_instr << 28) | (register << 20) | (old_loc << 12) | (new_loc << 4)
 
@@ -278,6 +267,21 @@ def convert_tpp_instr(instr):
 
     return encoded_instr
 
+def convert_numeric_val(numeric_val):
+    """
+    Converts a number into an int decimal representation, regardless
+    of whether it is already an int or a string representing a hex
+    or binary value.
+
+    :arg numeric_val: an int or a string of a hex or binary value
+                      (e.g. "0x123" or "0b101")
+    """
+    if type(numeric_val) is int:
+        return numeric_val
+    elif numeric_val[1] == "x":
+        return int(numeric_val, 16)
+    else:
+        return int(numeric_val, 2)
 
 if __name__ == '__main__':
     main()

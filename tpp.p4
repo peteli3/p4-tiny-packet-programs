@@ -55,7 +55,6 @@ control TPPIngress(
     bit<8> cur_insn_rs2;
     bool cexec_stop = false; // needs to be reset after each entire TPP pkt!
     bool cstore = false; // needs to be reset after each cstore
-    bit<32> num_sp_decs = 0;
     bit<32> just_popped = 0;
     bit<32> just_cstored = 0;
 
@@ -67,7 +66,6 @@ control TPPIngress(
             cur_insn_rs2: exact;
             cexec_stop: exact;
             cstore: exact;
-            num_sp_decs: exact;
             just_popped: exact;
             just_cstored: exact;
         }
@@ -140,8 +138,6 @@ control TPPIngress(
         bit<32> stack_top_val;
         tpp_mem_reg.read(stack_top_val, hdr.tpp_header.mem_sp);
         switch_reg.write((bit<32>) cur_insn_rd, stack_top_val);
-        hdr.tpp_header.mem_sp = hdr.tpp_header.mem_sp - 1;
-        num_sp_decs = num_sp_decs + 1;
         just_popped = stack_top_val; // for debugging
     }
 
@@ -355,7 +351,6 @@ control TPPIngress(
     }
 
     action cleanup_tpp() {
-        hdr.tpp_header.mem_sp = hdr.tpp_header.mem_sp + num_sp_decs;
         cexec_stop = false;
     }
 

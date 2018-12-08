@@ -376,30 +376,48 @@ control TPPIngress(
                 clear_tpp_insn_registers();
             }
 
-            // TODO to enable these: make a separate table for each
-            // THEN!! populate the tpp-runtime.json with same rules!
-            if (hdr.tpp_insns[1].isValid()  && !cexec_stop) {
+            if (hdr.tpp_insns[1].isValid() && !cexec_stop) {
                 parse_tpp_insn((bit<8>) 1);
                 tpp_insn_action1.apply();
+                if (cstore) {
+                    // do the deed
+                    tpp_cstore_store();
+                    cstore = false;
+                }
                 clear_tpp_insn_registers();
             }
             
             
-            if (hdr.tpp_insns[2].isValid()  && !cexec_stop) {
+            if (hdr.tpp_insns[2].isValid() && !cexec_stop) {
                 parse_tpp_insn((bit<8>) 2);
                 tpp_insn_action2.apply();
+                if (cstore) {
+                    // do the deed
+                    tpp_cstore_store();
+                    cstore = false;
+                }
                 clear_tpp_insn_registers();
             }
 
-            if (hdr.tpp_insns[3].isValid()  && !cexec_stop) {
+            if (hdr.tpp_insns[3].isValid() && !cexec_stop) {
                 parse_tpp_insn((bit<8>) 3);
                 tpp_insn_action3.apply();
+                if (cstore) {
+                    // do the deed
+                    tpp_cstore_store();
+                    cstore = false;
+                }
                 clear_tpp_insn_registers();
             }
 
-            if (hdr.tpp_insns[4].isValid()  && !cexec_stop) {
+            if (hdr.tpp_insns[4].isValid() && !cexec_stop) {
                 parse_tpp_insn((bit<8>) 4);
                 tpp_insn_action4.apply();
+                if (cstore) {
+                    // do the deed
+                    tpp_cstore_store();
+                    cstore = false;
+                }
                 clear_tpp_insn_registers();
             }
 

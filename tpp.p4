@@ -154,7 +154,7 @@ control TPPIngress(
         switch_reg.read(switch_val, (bit<32>) cur_insn_rd);
         bit<32> pkt_val;
         tpp_mem_reg.read(pkt_val, (bit<32>) cur_insn_rs1);
-        cexec_stop = (switch_val == pkt_val);
+        cexec_stop = (switch_val != pkt_val);
     }
 
     action tpp_cstore_eval_predicate() {
@@ -360,9 +360,6 @@ control TPPIngress(
             
             read_tpp_memory();
 
-            // for testing purposes
-            switch_reg.write(18, 0x101010);
-
             // only run first 5 insns
             if (hdr.tpp_insns[0].isValid() && !cexec_stop) {
                 parse_tpp_insn((bit<8>) 0);
@@ -388,19 +385,19 @@ control TPPIngress(
             
             
             if (hdr.tpp_insns[2].isValid()  && !cexec_stop) {
-                parse_tpp_insn((bit<8>) 1);
+                parse_tpp_insn((bit<8>) 2);
                 tpp_insn_action2.apply();
                 clear_tpp_insn_registers();
             }
 
             if (hdr.tpp_insns[3].isValid()  && !cexec_stop) {
-                parse_tpp_insn((bit<8>) 1);
+                parse_tpp_insn((bit<8>) 3);
                 tpp_insn_action3.apply();
                 clear_tpp_insn_registers();
             }
 
             if (hdr.tpp_insns[4].isValid()  && !cexec_stop) {
-                parse_tpp_insn((bit<8>) 1);
+                parse_tpp_insn((bit<8>) 4);
                 tpp_insn_action4.apply();
                 clear_tpp_insn_registers();
             }

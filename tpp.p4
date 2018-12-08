@@ -195,6 +195,90 @@ control TPPIngress(
     }
     // USE ABOVE AS TABLE TEMPLATE
 
+    table tpp_insn_action0 {
+        key = {
+            cur_insn_opcode: exact;
+        }
+        actions = {
+            tpp_push;
+            tpp_load;
+            tpp_pop;
+            tpp_store;
+            tpp_cexec;
+            tpp_cstore_eval_predicate;
+            drop;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
+    table tpp_insn_action1 {
+        key = {
+            cur_insn_opcode: exact;
+        }
+        actions = {
+            tpp_push;
+            tpp_load;
+            tpp_pop;
+            tpp_store;
+            tpp_cexec;
+            tpp_cstore_eval_predicate;
+            drop;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
+    table tpp_insn_action2 {
+        key = {
+            cur_insn_opcode: exact;
+        }
+        actions = {
+            tpp_push;
+            tpp_load;
+            tpp_pop;
+            tpp_store;
+            tpp_cexec;
+            tpp_cstore_eval_predicate;
+            drop;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
+    table tpp_insn_action3 {
+        key = {
+            cur_insn_opcode: exact;
+        }
+        actions = {
+            tpp_push;
+            tpp_load;
+            tpp_pop;
+            tpp_store;
+            tpp_cexec;
+            tpp_cstore_eval_predicate;
+            drop;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
+    table tpp_insn_action4 {
+        key = {
+            cur_insn_opcode: exact;
+        }
+        actions = {
+            tpp_push;
+            tpp_load;
+            tpp_pop;
+            tpp_store;
+            tpp_cexec;
+            tpp_cstore_eval_predicate;
+            drop;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
 
     action read_tpp_memory() {
         // if # mem slots changes, modify this
@@ -287,7 +371,7 @@ control TPPIngress(
             // only run first 5 insns
             if (hdr.tpp_insns[0].isValid() && !cexec_stop) {
                 parse_tpp_insn((bit<8>) 0);
-                tpp_insn_action.apply();
+                tpp_insn_action0.apply();
                 debug.apply();
 
                 if (cstore) {
@@ -301,7 +385,6 @@ control TPPIngress(
 
             // TODO to enable these: make a separate table for each
             // THEN!! populate the tpp-runtime.json with same rules!
-            /* 
             if (hdr.tpp_insns[1].isValid()  && !cexec_stop) {
                 parse_tpp_insn((bit<8>) 1);
                 tpp_insn_action1.apply();
@@ -326,7 +409,6 @@ control TPPIngress(
                 tpp_insn_action4.apply();
                 clear_tpp_insn_registers();
             }
-            */
 
             flush_tpp_memory_to_pkt();
             cleanup_tpp();

@@ -4,7 +4,7 @@
   "bmv2_json": "build/switch.json",
   "table_entries": [
     {
-      "table": "MyIngress.tppIngress.tpp_insn_action",
+      "table": "MyIngress.tppIngress.tpp_insn_action0",
       "match": {
         "cur_insn_opcode": 0
       },
@@ -12,7 +12,7 @@
       "action_params": {}
     },
     {
-      "table": "MyIngress.tppIngress.tpp_insn_action",
+      "table": "MyIngress.tppIngress.tpp_insn_action0",
       "match": {
         "cur_insn_opcode": 1
       },
@@ -20,7 +20,7 @@
       "action_params": {}
     },
     {
-      "table": "MyIngress.tppIngress.tpp_insn_action",
+      "table": "MyIngress.tppIngress.tpp_insn_action0",
       "match": {
         "cur_insn_opcode": 2
       },
@@ -28,7 +28,7 @@
       "action_params": {}
     },
     {
-      "table": "MyIngress.tppIngress.tpp_insn_action",
+      "table": "MyIngress.tppIngress.tpp_insn_action0",
       "match": {
         "cur_insn_opcode": 3
       },
@@ -36,7 +36,7 @@
       "action_params": {}
     },
     {
-      "table": "MyIngress.tppIngress.tpp_insn_action",
+      "table": "MyIngress.tppIngress.tpp_insn_action0",
       "match": {
         "cur_insn_opcode": 4
       },
@@ -44,7 +44,199 @@
       "action_params": {}
     },
     {
-      "table": "MyIngress.tppIngress.tpp_insn_action",
+      "table": "MyIngress.tppIngress.tpp_insn_action0",
+      "match": {
+        "cur_insn_opcode": 5
+      },
+      "action_name": "MyIngress.tppIngress.tpp_cstore_eval_predicate",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action1",
+      "match": {
+        "cur_insn_opcode": 0
+      },
+      "action_name": "MyIngress.tppIngress.tpp_push",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action1",
+      "match": {
+        "cur_insn_opcode": 1
+      },
+      "action_name": "MyIngress.tppIngress.tpp_load",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action1",
+      "match": {
+        "cur_insn_opcode": 2
+      },
+      "action_name": "MyIngress.tppIngress.tpp_pop",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action1",
+      "match": {
+        "cur_insn_opcode": 3
+      },
+      "action_name": "MyIngress.tppIngress.tpp_store",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action1",
+      "match": {
+        "cur_insn_opcode": 4
+      },
+      "action_name": "MyIngress.tppIngress.tpp_cexec",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action1",
+      "match": {
+        "cur_insn_opcode": 5
+      },
+      "action_name": "MyIngress.tppIngress.tpp_cstore_eval_predicate",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action2",
+      "match": {
+        "cur_insn_opcode": 0
+      },
+      "action_name": "MyIngress.tppIngress.tpp_push",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action2",
+      "match": {
+        "cur_insn_opcode": 1
+      },
+      "action_name": "MyIngress.tppIngress.tpp_load",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action2",
+      "match": {
+        "cur_insn_opcode": 2
+      },
+      "action_name": "MyIngress.tppIngress.tpp_pop",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action2",
+      "match": {
+        "cur_insn_opcode": 3
+      },
+      "action_name": "MyIngress.tppIngress.tpp_store",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action2",
+      "match": {
+        "cur_insn_opcode": 4
+      },
+      "action_name": "MyIngress.tppIngress.tpp_cexec",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action2",
+      "match": {
+        "cur_insn_opcode": 5
+      },
+      "action_name": "MyIngress.tppIngress.tpp_cstore_eval_predicate",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action3",
+      "match": {
+        "cur_insn_opcode": 0
+      },
+      "action_name": "MyIngress.tppIngress.tpp_push",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action3",
+      "match": {
+        "cur_insn_opcode": 1
+      },
+      "action_name": "MyIngress.tppIngress.tpp_load",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action3",
+      "match": {
+        "cur_insn_opcode": 2
+      },
+      "action_name": "MyIngress.tppIngress.tpp_pop",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action3",
+      "match": {
+        "cur_insn_opcode": 3
+      },
+      "action_name": "MyIngress.tppIngress.tpp_store",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action3",
+      "match": {
+        "cur_insn_opcode": 4
+      },
+      "action_name": "MyIngress.tppIngress.tpp_cexec",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action3",
+      "match": {
+        "cur_insn_opcode": 5
+      },
+      "action_name": "MyIngress.tppIngress.tpp_cstore_eval_predicate",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action4",
+      "match": {
+        "cur_insn_opcode": 0
+      },
+      "action_name": "MyIngress.tppIngress.tpp_push",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action4",
+      "match": {
+        "cur_insn_opcode": 1
+      },
+      "action_name": "MyIngress.tppIngress.tpp_load",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action4",
+      "match": {
+        "cur_insn_opcode": 2
+      },
+      "action_name": "MyIngress.tppIngress.tpp_pop",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action4",
+      "match": {
+        "cur_insn_opcode": 3
+      },
+      "action_name": "MyIngress.tppIngress.tpp_store",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action4",
+      "match": {
+        "cur_insn_opcode": 4
+      },
+      "action_name": "MyIngress.tppIngress.tpp_cexec",
+      "action_params": {}
+    },
+    {
+      "table": "MyIngress.tppIngress.tpp_insn_action4",
       "match": {
         "cur_insn_opcode": 5
       },

@@ -130,8 +130,9 @@ control TPPIngress(
 
     action tpp_load() {
         // INVARIANT: cur_insn_rs1 < MAX_MEM_SLOTS
-        // TODO: cur_insn_rd tells u which switch_reg to read
-        tpp_mem_reg.write((bit<32>) cur_insn_rs1, (bit<32>) 69696969);
+        bit<32> val;
+        switch_reg.read(val, (bit<32>) cur_insn_rd);
+        tpp_mem_reg.write((bit<32>) cur_insn_rs1, val);
     }
 
     action tpp_pop() {

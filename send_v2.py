@@ -24,26 +24,6 @@ INSTR_MAP = {
     "CMPEXEC": 0b110
 }
 
-REGISTER_MAP = {
-    "Switch:SwitchID"        : 0b00000,
-    "Switch:L2Counter"       : 0b00001,
-    "Switch:L3Counter"       : 0b00010,
-    "Switch:FlowTableVerNum" : 0b00011,
-    "Switch:Timestamp"       : 0b00100,
-    "Port:LinkUtilization"   : 0b01000,
-    "Port:BytesReceived"     : 0b01001,
-    "Port:BytesDropped"      : 0b01010,
-    "Port:BytesEnqueued"     : 0b01011,
-    "Queue:BytesEnqueued"    : 0b10000,
-    "Queue:BytesDropped"     : 0b10001,
-    "Packet:InputPort"       : 0b11001,
-    "Packet:OutputPort"      : 0b11010,
-    "Packet:Queue"           : 0b11011,
-    "Packet:MatchedFlowEntry": 0b11100,
-    "Packet:AltRoutes"       : 0b11101,
-}
-
-
 class SourceRoute(Packet):
     fields_desc = [
         BitField("bos", 0, 1),
@@ -210,59 +190,39 @@ def convert_tpp_instr(instr):
     encoded_instr = INSTR_MAP[instr[0]]
 
     if instr[0] == "PUSH":
-        from_register = instr[1]
-        if from_register in REGISTER_MAP:
-            from_register = REGISTER_MAP[from_register]
-        else:
-            from_register = convert_numeric_val(from_register)
+        from_register = convert_numeric_val(instr[1])
 
         encoded_instr = (encoded_instr << 28) | (from_register << 20)
     
     elif instr[0] == "LOAD":
-        from_register, to_loc = instr[1], convert_numeric_val(instr[2])
-        if from_register in REGISTER_MAP:
-            from_register = REGISTER_MAP[from_register]
-        else:
-            from_register = convert_numeric_val(from_register)
+        from_register, to_loc = convert_numeric_val(instr[1]), convert_numeric_val(instr[2])
 
         encoded_instr = (encoded_instr << 28) | (from_register << 20) | (to_loc << 12)
 
     elif instr[0] == "POP":
-        to_register = instr[1]
-        if to_register in REGISTER_MAP:
-            to_register = REGISTER_MAP[to_register]
-        else:
-            to_register = convert_numeric_val(to_register)
+        to_register = convert_numeric_val(instr[1])
 
         encoded_instr = (encoded_instr << 28) | (to_register << 20)
 
     elif instr[0] == "STORE":
-        to_register, from_loc = instr[1], convert_numeric_val(instr[2])
-        if to_register in REGISTER_MAP:
-            to_register = REGISTER_MAP[to_register]
-        else:
-            to_register = convert_numeric_val(to_register)
+        to_register, from_loc = convert_numeric_val(instr[1]), convert_numeric_val(instr[2])
 
         encoded_instr = (encoded_instr << 28) | (to_register << 20) | (from_loc << 12)
 
     elif instr[0] == "CEXEC":
-        register, loc = instr[1], convert_numeric_val(instr[2])
-        if register in REGISTER_MAP:
-            register = REGISTER_MAP[register]
-        else:
-            register = convert_numeric_val(register)
+        register, loc = convert_numeric_val(instr[1]), convert_numeric_val(instr[2])
 
         encoded_instr = (encoded_instr << 28) | (register << 20) | (loc << 12)
     
     elif instr[0] == "CSTORE":
-        register, old_loc, new_loc = instr[1], convert_numeric_val(instr[2]), convert_numeric_val(instr[3])
-        if register in REGISTER_MAP:
-            register = REGISTER_MAP[register]
-        else:
-            register = convert_numeric_val(register)
+        register, old_loc, new_loc = convert_numeric_val(instr[1]), convert_numeric_val(instr[2]), convert_numeric_val(instr[3])
 
         encoded_instr = (encoded_instr << 28) | (register << 20) | (old_loc << 12) | (new_loc << 4)
 
+    elif instr[0] == "CMPEXEC":
+        register, old_loc, cmp_op = convert_numeric_val(instr[1]), convert_numeric_val(instr[2]), convert_cmp_op(instr[3])
+
+        encoded_instr = (encoded_instr << 28) | (register << 20) | (old_loc << 12) | (cmp_op << 4)
     else:
         raise ValueError("Unrecognized instruction")
 
@@ -283,6 +243,33 @@ def convert_numeric_val(numeric_val):
         return int(numeric_val, 16)
     else:
         return int(numeric_val, 2)
+
+def convert_cmp_op(cmp_op):
+    """
+    Converts a cmp operator into an int decimal representation,
+    regardless of whether it is already an int or a string
+    representing the operator.
+
+    :arg cmp_op: an int or a string representing a comparison
+                 (valid values in the mapping below)
+    """
+    if type(cmp_op) is int:
+        return cmp_op
+
+    cmp_op_map = {
+        "EQUAL": 0b000001,
+        "GT":    0b000010,
+        ">":     0b000010,
+        "GTE":   0b000100,
+        ">=":    0b000100,
+        "LT":    0b001000,
+        "<":     0b001000,
+        "LTE":   0b010000,
+        "<=":    0b010000,
+        "NE":    0b100000,
+        "!=":    0b100000,
+    }
+    return cmp_op_map[cmp_op]
 
 if __name__ == '__main__':
     main()

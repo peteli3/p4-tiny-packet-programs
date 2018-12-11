@@ -20,7 +20,8 @@ INSTR_MAP = {
     "POP"   : 0b010,
     "STORE" : 0b011,
     "CEXEC" : 0b100,
-    "CSTORE": 0b101
+    "CSTORE": 0b101,
+    "CMPEXEC": 0b110
 }
 
 REGISTER_MAP = {

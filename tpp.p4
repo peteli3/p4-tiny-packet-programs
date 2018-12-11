@@ -57,6 +57,8 @@ control TPPIngress(
     bool cstore = false; // needs to be reset after each cstore
     bit<32> just_popped = 0;
     bit<32> just_cstored = 0;
+    bit<8> cmpexec_val = 0; // needs to be reset before each cmpexec
+    bool is_cmpexec = false; // needs to be reset after each cmpexec
 
     table tpp_debug {
         key = {
@@ -111,7 +113,6 @@ control TPPIngress(
         cur_insn_rs1 = insn[19:12];
         cur_insn_rs2 = insn[11:4];
         // last 4 bits (insn[3:0]) are dont-cares FOR NOW
-        // TODO: we can use last 4 bits for if-else insn!
     }
 
     action clear_tpp_insn_registers() {
@@ -150,6 +151,22 @@ control TPPIngress(
         just_popped = pkt_val; // for debugging
     }
 
+    action tpp_cmpexec() {
+        is_cmpexec = true;
+        cmpexec_val = 0;
+        bit<32> switch_val;
+        switch_reg.read(switch_val, (bit<32>) cur_insn_rd);
+        bit<32> pkt_val;
+        tpp_mem_reg.read(pkt_val, (bit<32>) cur_insn_rs1);
+
+        cmpexec_val = cmpexec_val | ((bit<8>)(bit<1>)(switch_val == pkt_val));
+        cmpexec_val = cmpexec_val | ((bit<8>)(bit<1>)(switch_val > pkt_val) << 1);
+        cmpexec_val = cmpexec_val | ((bit<8>)(bit<1>)(switch_val >= pkt_val) << 2);
+        cmpexec_val = cmpexec_val | ((bit<8>)(bit<1>)(switch_val < pkt_val) << 3);
+        cmpexec_val = cmpexec_val | ((bit<8>)(bit<1>)(switch_val <= pkt_val) << 4);
+        cmpexec_val = cmpexec_val | ((bit<8>)(bit<1>)(switch_val != pkt_val) << 5);
+    }
+
     action tpp_cexec() {
         bit<32> switch_val;
         switch_reg.read(switch_val, (bit<32>) cur_insn_rd);
@@ -185,6 +202,7 @@ control TPPIngress(
             tpp_store;
             tpp_cexec;
             tpp_cstore_eval_predicate;
+            tpp_cmpexec;
             drop;
             NoAction;
         }
@@ -203,6 +221,7 @@ control TPPIngress(
             tpp_store;
             tpp_cexec;
             tpp_cstore_eval_predicate;
+            tpp_cmpexec;
             drop;
             NoAction;
         }
@@ -220,6 +239,7 @@ control TPPIngress(
             tpp_store;
             tpp_cexec;
             tpp_cstore_eval_predicate;
+            tpp_cmpexec;
             drop;
             NoAction;
         }
@@ -237,6 +257,7 @@ control TPPIngress(
             tpp_store;
             tpp_cexec;
             tpp_cstore_eval_predicate;
+            tpp_cmpexec;
             drop;
             NoAction;
         }
@@ -254,6 +275,7 @@ control TPPIngress(
             tpp_store;
             tpp_cexec;
             tpp_cstore_eval_predicate;
+            tpp_cmpexec;
             drop;
             NoAction;
         }
@@ -271,6 +293,7 @@ control TPPIngress(
             tpp_store;
             tpp_cexec;
             tpp_cstore_eval_predicate;
+            tpp_cmpexec;
             drop;
             NoAction;
         }
@@ -373,6 +396,12 @@ control TPPIngress(
                     tpp_debug.apply();
                     cstore = false;
                 }
+                if (is_cmpexec) {
+                    if (cmpexec_val & cur_insn_rs2 == 0) {
+                        cexec_stop = true;
+                    }
+                    is_cmpexec = false;
+                }
                 clear_tpp_insn_registers();
             }
 
@@ -383,6 +412,12 @@ control TPPIngress(
                     // do the deed
                     tpp_cstore_store();
                     cstore = false;
+                }
+                if (is_cmpexec) {
+                    if (cmpexec_val & cur_insn_rs2 == 0) {
+                        cexec_stop = true;
+                    }
+                    is_cmpexec = false;
                 }
                 clear_tpp_insn_registers();
             }
@@ -396,6 +431,12 @@ control TPPIngress(
                     tpp_cstore_store();
                     cstore = false;
                 }
+                if (is_cmpexec) {
+                    if (cmpexec_val & cur_insn_rs2 == 0) {
+                        cexec_stop = true;
+                    }
+                    is_cmpexec = false;
+                }
                 clear_tpp_insn_registers();
             }
 
@@ -407,6 +448,12 @@ control TPPIngress(
                     tpp_cstore_store();
                     cstore = false;
                 }
+                if (is_cmpexec) {
+                    if (cmpexec_val & cur_insn_rs2 == 0) {
+                        cexec_stop = true;
+                    }
+                    is_cmpexec = false;
+                }
                 clear_tpp_insn_registers();
             }
 
@@ -417,6 +464,12 @@ control TPPIngress(
                     // do the deed
                     tpp_cstore_store();
                     cstore = false;
+                }
+                if (is_cmpexec) {
+                    if (cmpexec_val & cur_insn_rs2 == 0) {
+                        cexec_stop = true;
+                    }
+                    is_cmpexec = false;
                 }
                 clear_tpp_insn_registers();
             }

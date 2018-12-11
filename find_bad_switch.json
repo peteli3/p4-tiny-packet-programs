@@ -1,0 +1,10 @@
+{
+    "ethernetDstAddr": "10.0.4.2",
+    "instructions": [
+        ["CMPEXEC", 0, 0, "<"],
+        ["PUSH", 0]
+    ],
+    "initial_mem": [
+        250
+    ]
+}

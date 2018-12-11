@@ -1,0 +1,17 @@
+{
+    "ethernetDstAddr": "10.0.4.2",
+    "instructions": [
+        ["POP", 0],
+        ["PUSH", 0],
+        ["CSTORE", 0, 9, 5]
+    ],
+    "initial_mem": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        225,
+        250
+    ]
+}

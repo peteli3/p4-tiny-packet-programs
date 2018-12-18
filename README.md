@@ -1,7 +1,7 @@
 # Tiny packet programs as a p4-backed DSL
 
 Final project for:  
-CS 6114 - Network programming languages
+CS 6114 - Network programming languages  
 Fall 2018, taught by Nate Foster
 
 ## Abstract
